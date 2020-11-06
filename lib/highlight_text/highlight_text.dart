@@ -11,8 +11,6 @@ class RichTextController extends ChangeNotifier {
   /// containing the user selection
   List<TextSelection> _selected = [];
 
-  List<List<TextSpan>> selectedText = [];
-
   RichTextController(this._source);
 
   /// call when user choose highlight from the menu
@@ -55,12 +53,16 @@ class RichTextController extends ChangeNotifier {
   }
 
   List<TextSpan> get renderingData => _source;
+
+  List<TextSelection> get selectedText => _selected;
 }
 
 class HighlightText extends StatefulWidget {
   final List<TextSpan> spans;
+  final Function onHighlight;
 
-  const HighlightText({Key key, this.spans}) : super(key: key);
+  const HighlightText({Key key, this.spans, this.onHighlight})
+      : super(key: key);
 
   @override
   _HighlightTextState createState() => _HighlightTextState();
@@ -70,8 +72,6 @@ class _HighlightTextState extends State<HighlightText> {
   RichTextController richTextController;
 
   List<TextSelectionToolbarItem> selectionToolBarItems;
-
-  FocusNode _focusNode;
 
   @override
   void initState() {
@@ -93,8 +93,6 @@ class _HighlightTextState extends State<HighlightText> {
       ),
       TextSelectionToolbarItem.copy(),
     ];
-
-    _focusNode = FocusNode();
 
     super.initState();
   }
@@ -124,7 +122,6 @@ class _HighlightTextState extends State<HighlightText> {
   void dispose() {
     richTextController.removeListener(updateRichText);
     richTextController.dispose();
-    _focusNode.dispose();
     super.dispose();
   }
 
@@ -144,9 +141,22 @@ class _HighlightTextState extends State<HighlightText> {
           ),
         ),
       ),
-      focusNode: _focusNode,
-      onTap: () {
-        print('focusNode stuff ${_focusNode.context.widget}');
+      onSelectionChanged: (selection, cause) {
+        // 1. get the base of the selection, which will be the indication of the
+        // tapping point we want to compare if it's fall in the range of one of our selection
+        int tappingPoint = selection.baseOffset;
+
+        final selectedText = richTextController.selectedText;
+
+        // 2. go through the selection we collected and see if it fall in one of the range in the selection
+        for (int i = 0; i < selectedText.length; i++) {
+          if (tappingPoint >= selectedText[i].baseOffset &&
+              tappingPoint <= selectedText[i].extentOffset) {
+            // print(selectedText[i]);
+
+            widget.onHighlight(selectedText[i]);
+          }
+        }
       },
     );
   }
