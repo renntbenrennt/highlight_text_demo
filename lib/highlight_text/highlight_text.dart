@@ -5,6 +5,13 @@ import 'package:text_span_thousands/highlight_text/lib/cupertino/cupertino_selec
 import 'package:text_span_thousands/highlight_text/lib/material/material_selection_controllers.dart';
 import 'package:text_span_thousands/highlight_text/lib/text_selection_controls.dart';
 
+class SelectedData {
+  int baseOffset;
+  int extentOffset;
+
+  SelectedData({this.baseOffset, this.extentOffset});
+}
+
 class RichTextController extends ChangeNotifier {
   List<TextSpan> _source;
 
@@ -48,7 +55,7 @@ class RichTextController extends ChangeNotifier {
       );
     }
 
-    //TODO 3. set the result
+    //3. set the result
     _source = res;
   }
 
@@ -58,11 +65,29 @@ class RichTextController extends ChangeNotifier {
 }
 
 class HighlightText extends StatefulWidget {
+  /// rendering text, represented as a list of TextSpan
   final List<TextSpan> spans;
-  final Function onHighlight;
 
-  const HighlightText({Key key, this.spans, this.onHighlight})
-      : super(key: key);
+  /// function to react when user tap on the highlighted text
+  final Function onHighlightedText;
+
+  /// function to react when user choose highlight from the toolbar
+  final Function highlightText;
+
+  /// default highlighted text
+  final List<SelectedData> defaultHighlightedText;
+
+  /// function to react when user tap on the default highlighted text
+  final Function onDefaultHighlightedText;
+
+  const HighlightText({
+    Key key,
+    this.spans,
+    this.onHighlightedText,
+    this.highlightText,
+    this.defaultHighlightedText,
+    this.onDefaultHighlightedText,
+  }) : super(key: key);
 
   @override
   _HighlightTextState createState() => _HighlightTextState();
@@ -86,6 +111,10 @@ class _HighlightTextState extends State<HighlightText> {
 
           print('baseOffset = ${selection.baseOffset}');
           print('extentOffset = ${selection.extentOffset}');
+
+          if (widget.highlightText != null) {
+            widget.highlightText(selectionController.selection);
+          }
 
           richTextController.addSelection(selection);
         },
@@ -148,13 +177,24 @@ class _HighlightTextState extends State<HighlightText> {
 
         final selectedText = richTextController.selectedText;
 
+        final defaultSelectedText = widget.defaultHighlightedText;
+
         // 2. go through the selection we collected and see if it fall in one of the range in the selection
         for (int i = 0; i < selectedText.length; i++) {
           if (tappingPoint >= selectedText[i].baseOffset &&
               tappingPoint <= selectedText[i].extentOffset) {
             // print(selectedText[i]);
 
-            widget.onHighlight(selectedText[i]);
+            widget.onHighlightedText(selectedText[i]);
+          }
+        }
+
+        if (defaultSelectedText != null) {
+          for (int i = 0; i < defaultSelectedText.length; i++) {
+            if (tappingPoint >= defaultSelectedText[i].baseOffset &&
+                tappingPoint <= defaultSelectedText[i].extentOffset) {
+              widget.onDefaultHighlightedText(defaultSelectedText[i]);
+            }
           }
         }
       },

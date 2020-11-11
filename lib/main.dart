@@ -110,7 +110,14 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Container(
               child: HighlightText(
                 spans: destructData(data),
-                onHighlight: (TextSelection selection) {
+                defaultHighlightedText: [
+                  SelectedData(baseOffset: 106, extentOffset: 157)
+                ],
+                onDefaultHighlightedText: (SelectedData selectedData) {
+                  print(
+                      'base: ${selectedData.baseOffset} extent: ${selectedData.extentOffset}');
+                },
+                onHighlightedText: (TextSelection selection) {
                   String selectionText = destructData(data)
                       .sublist(selection.baseOffset, selection.extentOffset)
                       .fold(
